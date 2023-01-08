@@ -4,51 +4,73 @@ namespace Ships
 {
     public class Game
     {
-        private const string INPUT_REGEX = "^[a-zA-z][0-9]$";
+        private const string INPUT_REGEX = "^[a-zA-Z][0-9]{1,2}$";
+
         private readonly Grid _grid;
+        private readonly Ship[] _ships = { new(4), new(4), new(5) };
 
         public Game()
         {
             _grid = new Grid();
-            _grid.Draw();
+
+            foreach (var ship in _ships)
+                _grid.PlaceShip(ship);
+
+            Draw();
         }
+
+        private bool IsFinished => _ships.All(s => s.IsDestroyed);
 
         public bool Play()
         {
             try
             {
-                var input = GetInput();
+                _grid.MarkTile(GetInput());
+                if (IsFinished)
+                {
+                    Console.WriteLine("You won!");
+                    return false;
+                }
             }
             catch (Exception e)
             {
-                ReDraw();
+                Draw();
                 Console.WriteLine(e.Message);
                 return true;
             }
 
-            ReDraw();
+            Draw();
 
             return true;
         }
 
-        private string GetInput()
+        private (int row, int column) GetInput()
         {
             var input = Console.ReadLine();
             var regex = new Regex(INPUT_REGEX);
             if (input == null)
                 throw new Exception("Invalid input, try again");
 
-            var trimmedInput = input.Trim();
-            var match = regex.Match(trimmedInput);
+            var trimmed = input.Trim().ToLower();
+            var match = regex.Match(trimmed);
             if (!match.Success)
                 throw new Exception("Invalid input, try again");
 
-            return trimmedInput;
+            var inputNumbers = string.Join(string.Empty, trimmed.Skip(1).Take(trimmed.Length - 1));
+            var row = int.Parse(inputNumbers) - 1;
+            var column = Array.IndexOf(Alphabet.CharArray, trimmed.First());
+
+            return (row, column);
         }
 
-        private void ReDraw()
+        private void Draw()
         {
             Console.Clear();
+
+            Console.WriteLine("Ships");
+            var groupedShips = _ships.GroupBy(s => s.Size);
+            Console.WriteLine(string.Join(", ", groupedShips.Select(g => $"{g.Count(s => !s.IsDestroyed)}x{g.Key}")));
+
             _grid.Draw();
         }
     }
