@@ -21,29 +21,22 @@ namespace Ships
             Draw();
         }
 
-        private bool IsFinished => _ships.All(s => s.IsDestroyed);
+        public bool IsFinished => _ships.All(s => s.IsDestroyed);
 
-        public bool Play()
+        public void Play()
         {
             try
             {
                 _grid.MarkTile(GetInput());
-                if (IsFinished)
-                {
-                    Console.WriteLine("You won!");
-                    return false;
-                }
             }
             catch (Exception e)
             {
                 Draw();
                 Console.WriteLine(e.Message);
-                return true;
+                return;
             }
 
             Draw();
-
-            return true;
         }
 
         private (int row, int column) GetInput()
