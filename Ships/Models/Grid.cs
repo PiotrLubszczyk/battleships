@@ -1,6 +1,7 @@
+using Ships.Utils;
 using System.Text;
 
-namespace Ships
+namespace Ships.Models
 {
     public class Grid
     {

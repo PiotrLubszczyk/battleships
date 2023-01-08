@@ -1,4 +1,4 @@
-namespace Ships
+namespace Ships.Models
 {
     public class Ship
     {

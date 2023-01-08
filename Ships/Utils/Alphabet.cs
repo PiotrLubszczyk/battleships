@@ -1,4 +1,4 @@
-namespace Ships
+namespace Ships.Utils
 {
     public static class Alphabet
     {

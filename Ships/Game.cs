@@ -1,3 +1,5 @@
+using Ships.Models;
+using Ships.Utils;
 using System.Text.RegularExpressions;
 
 namespace Ships
@@ -68,7 +70,7 @@ namespace Ships
             Console.Clear();
 
             Console.WriteLine("Ships");
-            var groupedShips = _ships.GroupBy(s => s.Size);
+            var groupedShips = _ships.GroupBy(s => s.Size).OrderBy(g => g.Key);
             Console.WriteLine(string.Join(", ", groupedShips.Select(g => $"{g.Count(s => !s.IsDestroyed)}x{g.Key}")));
 
             _grid.Draw();
