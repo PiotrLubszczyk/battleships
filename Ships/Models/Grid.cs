@@ -5,12 +5,15 @@ namespace Ships.Models
 {
     public class Grid
     {
+        private readonly string _columnHeaders;
         private readonly int _gridSize;
         private readonly GridTile[,] _tilesGrid;
 
         public Grid(int gridSize = 10)
         {
             _gridSize = gridSize;
+            _columnHeaders =
+                $"  |{string.Join('|', Alphabet.CharArray.Take(_gridSize).Select(c => c.ToString().ToUpper()))}|";
             _tilesGrid = new GridTile[_gridSize, _gridSize];
 
             for (var i = 0; i < _gridSize; i++)
@@ -18,28 +21,22 @@ namespace Ships.Models
                 _tilesGrid[i, j] = new GridTile();
         }
 
-        public void MarkTile((int row, int column) coordinates)
+        public void MarkTile(Coordinates coordinates)
         {
-            if (coordinates.row >= _gridSize)
+            if (coordinates.Row >= _gridSize)
                 throw new Exception("Invalid row selected, try again.");
 
-            if (coordinates.column >= _gridSize)
+            if (coordinates.Column >= _gridSize)
                 throw new Exception("Invalid column selected, try again.");
 
-            var tile = _tilesGrid[coordinates.row, coordinates.column];
-            if (tile.IsHit)
-                throw new Exception("Tile already hit.");
-
-            tile.IsHit = true;
+            var tile = _tilesGrid[coordinates.Row, coordinates.Column];
+            tile.Hit();
         }
 
         public void Draw()
         {
-            var headers =
-                $"  |{string.Join('|', Alphabet.CharArray.Take(_gridSize).Select(c => c.ToString().ToUpper()))}|";
-
             Console.WriteLine("Board");
-            Console.WriteLine(headers);
+            Console.WriteLine(_columnHeaders);
 
             for (var row = 0; row < _gridSize; row++)
             {
@@ -60,18 +57,21 @@ namespace Ships.Models
 
             while (true)
             {
-                var start = (row: rand.Next(0, _gridSize - ship.Size), column: rand.Next(0, _gridSize - ship.Size));
                 var isHorizontal = rand.NextDouble() >= 0.5;
 
+                var startLimit = _gridSize - ship.Size + 1;
+                var start = new Coordinates(rand.Next(0, !isHorizontal ? startLimit : _gridSize),
+                    rand.Next(0, isHorizontal ? startLimit : _gridSize));
+
                 var safeAreaCoordinates = GetSafeAreaCoordinates(start, ship.Size, isHorizontal);
-                var safeAreaTiles = safeAreaCoordinates.Select(c => _tilesGrid[c.row, c.column]).ToList();
+                var safeAreaTiles = safeAreaCoordinates.Select(c => _tilesGrid[c.Row, c.Column]).ToList();
 
                 if (safeAreaTiles.Any(t => t.HasShip))
                     continue;
 
                 var shipTiles = isHorizontal ?
-                    Enumerable.Range(start.column, ship.Size).Select(t => _tilesGrid[start.row, t]).ToList() :
-                    Enumerable.Range(start.row, ship.Size).Select(t => _tilesGrid[t, start.column]).ToList();
+                    Enumerable.Range(start.Column, ship.Size).Select(t => _tilesGrid[start.Row, t]).ToList() :
+                    Enumerable.Range(start.Row, ship.Size).Select(t => _tilesGrid[t, start.Column]).ToList();
 
                 foreach (var tile in shipTiles)
                     tile.HasShip = true;
@@ -81,20 +81,22 @@ namespace Ships.Models
             }
         }
 
-        private IList<(int row, int column)> GetSafeAreaCoordinates((int row, int column) start, int size,
+        private IList<Coordinates> GetSafeAreaCoordinates(Coordinates start, int size,
             bool isHorizontal)
         {
-            var adjacentCoordinates = new List<(int row, int column)>();
-            var range = Enumerable.Range((isHorizontal ? start.column : start.row) - 1, size + 2).ToList();
+            var safeArea = new List<Coordinates>();
+            var safeLength = Enumerable.Range((isHorizontal ? start.Column : start.Row) - 1, size + 2).ToList();
 
-            var mid = isHorizontal ? start.row : start.column;
-            for (var i = mid - 1; i <= mid + 1; i++)
-                adjacentCoordinates.AddRange(isHorizontal ?
-                    range.Select(c => (row: i, column: c)) :
-                    range.Select(c => (row: c, column: i)));
+            var shipAxis = isHorizontal ? start.Row : start.Column;
+            for (var i = shipAxis - 1; i <= shipAxis + 1; i++)
+                safeArea.AddRange(isHorizontal ?
+                    safeLength.Select(c => new Coordinates(i, c)) :
+                    safeLength.Select(c => new Coordinates(c, i)));
 
-            return adjacentCoordinates
-                .Where(c => c.row >= 0 && c.row < _gridSize && c.column >= 0 && c.column < _gridSize).ToList();
+            var trimmedSafeArea = safeArea
+                .Where(c => c.Row >= 0 && c.Row < _gridSize && c.Column >= 0 && c.Column < _gridSize);
+
+            return trimmedSafeArea.ToList();
         }
     }
 }

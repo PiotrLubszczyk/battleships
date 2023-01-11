@@ -6,7 +6,7 @@ namespace Ships
 {
     public class Game
     {
-        private const string INPUT_REGEX = "^[a-zA-Z][0-9]{1,2}$";
+        private const string INPUT_REGEX = "^[a-zA-Z][1-9][0-9]?$";
 
         private readonly Grid _grid;
         private readonly Ship[] _ships = { new(4), new(4), new(5) };
@@ -39,23 +39,24 @@ namespace Ships
             Draw();
         }
 
-        private (int row, int column) GetInput()
+        private Coordinates GetInput()
         {
             var input = Console.ReadLine();
-            var regex = new Regex(INPUT_REGEX);
             if (input == null)
-                throw new Exception("Invalid input, try again");
+                throw new Exception("Null input, try again");
 
             var trimmed = input.Trim().ToLower();
+
+            var regex = new Regex(INPUT_REGEX);
             var match = regex.Match(trimmed);
             if (!match.Success)
                 throw new Exception("Invalid input, try again");
 
-            var inputNumbers = string.Join(string.Empty, trimmed.Skip(1).Take(trimmed.Length - 1));
-            var row = int.Parse(inputNumbers) - 1;
+            var inputNumber = string.Join(string.Empty, trimmed.Skip(1).Take(trimmed.Length - 1));
+            var row = int.Parse(inputNumber) - 1;
             var column = Array.IndexOf(Alphabet.CharArray, trimmed.First());
 
-            return (row, column);
+            return new Coordinates(row, column);
         }
 
         private void Draw()
